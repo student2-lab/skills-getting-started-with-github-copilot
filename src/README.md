@@ -29,10 +29,10 @@ A super simple FastAPI application that allows students to view and sign up for 
 
 ## Running Backend Tests
 
-1. Install development dependencies:
+1. Install dependencies (includes pytest):
 
    ```
-   pip install -r ../requirements-dev.txt
+   pip install -r ../requirements.txt
    ```
 
 2. Run tests from the repository root:
