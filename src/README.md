@@ -6,6 +6,8 @@ A super simple FastAPI application that allows students to view and sign up for 
 
 - View all available extracurricular activities
 - Sign up for activities
+- Unregister participants from activities
+- Enforce signup rules (no duplicates, max capacity, normalized emails)
 
 ## Getting Started
 
@@ -25,12 +27,33 @@ A super simple FastAPI application that allows students to view and sign up for 
    - API documentation: http://localhost:8000/docs
    - Alternative documentation: http://localhost:8000/redoc
 
+## Running Backend Tests
+
+1. Install development dependencies:
+
+   ```
+   pip install -r ../requirements-dev.txt
+   ```
+
+2. Run tests from the repository root:
+
+   ```
+   pytest
+   ```
+
 ## API Endpoints
 
 | Method | Endpoint                                                          | Description                                                         |
 | ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
 | GET    | `/activities`                                                     | Get all activities with their details and current participant count |
 | POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Sign up for an activity                                             |
+| DELETE | `/activities/{activity_name}/participants?email=student@mergington.edu` | Unregister a participant from an activity                           |
+
+## Validation Rules
+
+- Emails are normalized before processing (`strip` + lowercase).
+- Duplicate signups are blocked (case-insensitive).
+- Signups are blocked when an activity reaches `max_participants`.
 
 ## Data Model
 

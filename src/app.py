@@ -19,6 +19,11 @@ current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
           "static")), name="static")
 
+
+def normalize_email(email: str) -> str:
+    """Normalize user email for consistent comparisons and storage."""
+    return email.strip().lower()
+
 # In-memory activity database
 activities = {
     "Chess Club": {
@@ -98,13 +103,21 @@ def signup_for_activity(activity_name: str, email: str):
     # Get the specific activity
     activity = activities[activity_name]
 
-    # Validate student is not already signed up
-    if email in activity["participants"]:
+    normalized_email = normalize_email(email)
+    if not normalized_email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    # Validate student is not already signed up (case-insensitive)
+    if any(normalize_email(participant) == normalized_email for participant in activity["participants"]):
         raise HTTPException(status_code=400, detail="Student already signed up")
 
+    # Validate activity has open spots
+    if len(activity["participants"]) >= activity["max_participants"]:
+        raise HTTPException(status_code=400, detail="Activity is full")
+
     # Add student
-    activity["participants"].append(email)
-    return {"message": f"Signed up {email} for {activity_name}"}
+    activity["participants"].append(normalized_email)
+    return {"message": f"Signed up {normalized_email} for {activity_name}"}
 
 
 @app.delete("/activities/{activity_name}/participants")
@@ -117,10 +130,20 @@ def unregister_from_activity(activity_name: str, email: str):
     # Get the specific activity
     activity = activities[activity_name]
 
+    normalized_email = normalize_email(email)
+    if not normalized_email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    participant_index = next(
+        (index for index, participant in enumerate(activity["participants"])
+         if normalize_email(participant) == normalized_email),
+        None,
+    )
+
     # Validate student is currently signed up
-    if email not in activity["participants"]:
+    if participant_index is None:
         raise HTTPException(status_code=404, detail="Participant not found")
 
     # Remove student
-    activity["participants"].remove(email)
-    return {"message": f"Unregistered {email} from {activity_name}"}
+    activity["participants"].pop(participant_index)
+    return {"message": f"Unregistered {normalized_email} from {activity_name}"}
